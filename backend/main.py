@@ -7,11 +7,12 @@ from fastapi.responses import HTMLResponse
 from backend.app.simulator.telemetry_simulator import telemetry_simulator
 from backend.app.agents.broadcast_supervisor_agent import broadcast_supervisor_agent
 from backend.app.mcp.grafana_mcp_client import grafana_mcp_client
+from backend.app.adk_agent_engine.agent import adk_agent
 
 app = FastAPI(
-    title="StreamGuard AI — Live Broadcast Continuity Supervisor",
-    description="Google Cloud Gemini ADK + Grafana Cloud MCP Server (grafana/mcp-grafana) for Live Broadcast Health & Incident Telemetry",
-    version="1.0.0"
+    title="StreamGuard AI — Google Cloud Agent Platform ADK Engine",
+    description="Native Google Cloud ADK + Vertex AI Agent Engine + Grafana Cloud MCP Server",
+    version="2.0.0"
 )
 
 app.add_middleware(
@@ -21,6 +22,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Native Google Cloud ADK Agent Platform Endpoint
+@app.post("/api/adk/query")
+def run_google_adk_query(prompt: str = "Analyze live broadcast health using Grafana MCP tools"):
+    """
+    Executes native Google Cloud Agent Development Kit (ADK) Agent tool reasoning.
+    """
+    return adk_agent.process_query(prompt)
 
 # API Endpoints
 @app.get("/api/telemetry/stream")
@@ -44,6 +53,7 @@ def inject_anomaly(anomaly_type: str = "ENCODER_OVERLOAD"):
 def get_grafana_mcp_tools():
     return {
         "mcp_server": "grafana/mcp-grafana (Official Grafana Cloud MCP Endpoint)",
+        "adk_framework": "Google Cloud Agent Development Kit (ADK)",
         "tool_count": len(grafana_mcp_client.list_active_mcp_tools()),
         "tools": grafana_mcp_client.list_active_mcp_tools()
     }
@@ -68,4 +78,4 @@ if os.path.exists(frontend_dir):
         if os.path.exists(index_path):
             with open(index_path, "r", encoding="utf-8") as f:
                 return f.read()
-        return "<h1>StreamGuard AI Backend Running</h1>"
+        return "<h1>StreamGuard AI Google ADK Backend Running</h1>"
