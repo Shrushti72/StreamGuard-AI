@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StreamGuard AI — Live Broadcast Supervisor (Grafana Track)</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="logo-container">
+                <i class="fa-solid fa-tower-broadcast logo-icon"></i>
+                <div class="logo-text">
+                    <h2>StreamGuard <span>AI</span></h2>
+                    <span class="subtext">Broadcast Supervisor • Grafana Track</span>
+                </div>
+            </div>
+
+            <nav class="nav-menu">
+                <button class="nav-btn active" data-tab="tab-monitor">
+                    <i class="fa-solid fa-chart-line"></i> Live Broadcast Telemetry
+                </button>
+                <button class="nav-btn" data-tab="tab-narrator">
+                    <i class="fa-solid fa-brain"></i> Gemini Executive Narrator
+                </button>
+                <button class="nav-btn" data-tab="tab-mcp">
+                    <i class="fa-solid fa-server"></i> Grafana MCP Tools (60+)
+                </button>
+                <button class="nav-btn" data-tab="tab-audit">
+                    <i class="fa-solid fa-list-check"></i> Grafana Incident Audit
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="status-badge gemini">
+                    <span class="dot"></span> Gemini 2.5/3 ADK
+                </div>
+                <div class="status-badge grafana">
+                    <span class="dot"></span> Grafana Cloud MCP
+                </div>
+                <div class="status-badge live">
+                    <span class="dot"></span> Live Stream Active
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Header Bar -->
+            <header class="header-bar">
+                <div class="header-title">
+                    <h1 id="page-title">Live Broadcast Control Room</h1>
+                    <p class="subtitle">CYBERPUNK MOVIE PREMIERE — GLOBAL LIVESTREAM (1.45M Concurrent Viewers)</p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-primary" onclick="runMCPAnalysis()">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Run Gemini MCP Analysis
+                    </button>
+                </div>
+            </header>
+
+            <!-- Tab 1: Live Broadcast Telemetry -->
+            <section id="tab-monitor" class="tab-content active">
+                <!-- Metrics Grid -->
+                <div class="stat-grid">
+                    <div class="stat-box">
+                        <span class="stat-label"><i class="fa-solid fa-microchip"></i> Ingest Server CPU</span>
+                        <span class="stat-value" id="val-cpu">42.5%</span>
+                        <span class="stat-sub">Limit: 85.0%</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label"><i class="fa-solid fa-layer-group"></i> Transcode Queue</span>
+                        <span class="stat-value" id="val-queue">8 frames</span>
+                        <span class="stat-sub">Max: 120 frames</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label"><i class="fa-solid fa-network-wired"></i> CDN Egress</span>
+                        <span class="stat-value" id="val-cdn">520.4 Gbps</span>
+                        <span class="stat-sub">Bandwidth OK</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label"><i class="fa-solid fa-circle-play"></i> Viewer Buffer Ratio</span>
+                        <span class="stat-value" id="val-buffer">0.42%</span>
+                        <span class="stat-sub">SLA Threshold: 1.5%</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label"><i class="fa-solid fa-waveform"></i> Audio/Video Desync</span>
+                        <span class="stat-value" id="val-desync">15.0 ms</span>
+                        <span class="stat-sub">Lip-sync Matched</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label"><i class="fa-solid fa-users"></i> Active Viewers</span>
+                        <span class="stat-value" id="val-viewers">1,450,210</span>
+                        <span class="stat-sub">Global Stream Peak</span>
+                    </div>
+                </div>
+
+                <!-- Anomaly Simulation Control Panel -->
+                <div class="card">
+                    <h3><i class="fa-solid fa-bolt"></i> Interactive Anomaly Simulation Panel</h3>
+                    <p style="font-size:0.85rem; color:#9ca3af; margin-bottom:1rem;">Simulate real-world broadcast incidents to watch Gemini ADK + Grafana Cloud MCP Server auto-correlate signals and open incidents.</p>
+                    <div class="btn-group">
+                        <button class="btn btn-danger" onclick="injectAnomaly('ENCODER_OVERLOAD')">
+                            <i class="fa-solid fa-triangle-exclamation"></i> 🚨 Ingest CPU Spike (98%)
+                        </button>
+                        <button class="btn btn-warning" onclick="injectAnomaly('CDN_THROTTLING')">
+                            <i class="fa-solid fa-wifi"></i> ⚠️ CDN Edge Drop (EU)
+                        </button>
+                        <button class="btn btn-warning" onclick="injectAnomaly('AUDIO_DESYNC')">
+                            <i class="fa-solid fa-volume-xmark"></i> 🔊 Audio/Video Desync (+450ms)
+                        </button>
+                        <button class="btn btn-secondary" onclick="injectAnomaly('RESET')">
+                            <i class="fa-solid fa-rotate-left"></i> ✅ Reset Telemetry
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Executive Alert Feed -->
+                <div class="card">
+                    <h3><i class="fa-solid fa-bullhorn"></i> Executive Plain-Language Alert Feed</h3>
+                    <div id="alert-feed-box" class="alert-feed">
+                        <div class="placeholder-state">
+                            <i class="fa-solid fa-tower-broadcast placeholder-icon"></i>
+                            <p>Click "Run Gemini MCP Analysis" or trigger an anomaly to generate real-time SRE narratives.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tab 2: Gemini Narrator -->
+            <section id="tab-narrator" class="tab-content">
+                <div class="card">
+                    <h3><i class="fa-solid fa-brain"></i> Gemini ADK SRE-to-Executive Translator</h3>
+                    <div id="narrator-card-content">
+                        <p class="placeholder-state">Run an analysis to view deep root cause insights.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tab 3: Grafana MCP Tools -->
+            <section id="tab-mcp" class="tab-content">
+                <div class="card">
+                    <h3><i class="fa-solid fa-server"></i> Active Grafana Cloud MCP Tools (`grafana/mcp-grafana`)</h3>
+                    <div id="mcp-tools-list" class="tools-grid">
+                        Loading active Grafana MCP tools...
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tab 4: Grafana Incident Audit -->
+            <section id="tab-audit" class="tab-content">
+                <div class="card">
+                    <h3><i class="fa-solid fa-list-check"></i> Grafana Cloud Incident Audit & Tool Invocations</h3>
+                    <div id="mcp-audit-box" class="audit-log">
+                        Loading Grafana MCP incident logs...
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
