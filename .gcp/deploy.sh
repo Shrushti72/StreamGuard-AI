@@ -43,6 +43,7 @@ gcloud run deploy ${SERVICE_NAME} \
     --region ${REGION} \
     --allow-unauthenticated \
     --set-env-vars="PROJECT_ID=${PROJECT_ID},LOCATION=${REGION}" \
+    --set-secrets="GRAFANA_URL=grafana-url:latest,GRAFANA_SERVICE_ACCOUNT_TOKEN=grafana-token:latest" \
     --memory 2Gi \
     --cpu 2
 
