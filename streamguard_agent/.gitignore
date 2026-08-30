@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# ADK local state
+.adk/
+
+# Local backups
+*.backup
+*.before-confluent-fix
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# OS/editor files
+.DS_Store
+.vscode/
+.idea/

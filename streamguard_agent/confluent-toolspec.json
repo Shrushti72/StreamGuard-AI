@@ -1,0 +1,96 @@
+{
+  "tools": [
+    {
+      "name": "list_kafka_topics",
+      "description": "List all Kafka topics in a cluster.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "annotations": {
+        "title": "List Kafka Topics",
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "describe_kafka_topic",
+      "description": "Get Kafka topic configuration.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "topic": {
+            "type": "string",
+            "description": "Kafka topic name."
+          }
+        },
+        "required": ["topic"]
+      },
+      "annotations": {
+        "title": "Describe Kafka Topic",
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "consume_kafka_messages",
+      "description": "Read sample messages from a Kafka topic.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "topic": {
+            "type": "string",
+            "description": "Kafka topic name."
+          },
+          "max_messages": {
+            "type": "integer",
+            "description": "Maximum number of messages to read."
+          }
+        },
+        "required": ["topic"]
+      },
+      "annotations": {
+        "title": "Consume Kafka Messages",
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "list_schema_subjects",
+      "description": "List Schema Registry subjects.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "annotations": {
+        "title": "List Schema Subjects",
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "read_schema_subject",
+      "description": "Get a Schema Registry schema.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "subject": {
+            "type": "string",
+            "description": "Schema Registry subject name."
+          }
+        },
+        "required": ["subject"]
+      },
+      "annotations": {
+        "title": "Read Schema Subject",
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": true
+      }
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "tools": [
+    {
+      "name": "list_kafka_topics",
+      "description": "List all Kafka topics in a cluster.",
+      "annotations": {
+        "title": "List Kafka Topics",
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "describe_kafka_topic",
+      "description": "Get Kafka topic configuration, including partition count and replication factor.",
+      "annotations": {
+        "title": "Describe Kafka Topic",
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "consume_kafka_messages",
+      "description": "Read one to ten sample messages from a Kafka topic, optionally targeting a partition and offset.",
+      "annotations": {
+        "title": "Consume Kafka Messages",
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "list_schema_subjects",
+      "description": "List all Schema Registry subjects, including subject name, version, schema ID, and schema type.",
+      "annotations": {
+        "title": "List Schema Subjects",
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "read_schema_subject",
+      "description": "Get the full Schema Registry schema definition for a subject.",
+      "annotations": {
+        "title": "Read Schema Subject",
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": true
+      }
+    }
+  ]
+}
