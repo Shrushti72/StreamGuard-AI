@@ -16,6 +16,8 @@ from google.adk.integrations.agent_registry import AgentRegistry
 from google.adk.auth.credential_manager import CredentialManager
 from google.adk.integrations.agent_identity import GcpAuthProvider
 from google.adk.tools.mcp_tool import McpToolset, StdioConnectionParams, StreamableHTTPConnectionParams
+from agento11y import Client as Agento11yClient
+from agento11y_google_adk import with_agento11y_google_adk_callbacks
 from mcp import StdioServerParameters
 
 
@@ -148,6 +150,34 @@ confluent_toolset = McpToolset(
 
 
 # ============================================================
+# Grafana Agent Observability
+agento11y_client = Agento11yClient()
+agento11y_callbacks = with_agento11y_google_adk_callbacks(
+    None,
+    client=agento11y_client,
+    provider_resolver="auto",
+)
+
+# Compatibility adapter for Google ADK 2.8.x:
+# ADK calls after_tool_callback with "tool_response",
+# while the Agent Observability integration expects "result".
+_agento11y_after_tool = agento11y_callbacks.get("after_tool_callback")
+
+if _agento11y_after_tool is not None:
+    async def _adk_compatible_after_tool_callback(
+        tool, args, tool_context, tool_response
+    ):
+        return await _agento11y_after_tool(
+            tool=tool,
+            args=args,
+            tool_context=tool_context,
+            result=tool_response,
+        )
+
+    agento11y_callbacks["after_tool_callback"] = (
+        _adk_compatible_after_tool_callback
+    )
+
 # BROADCAST MONITORING AGENT
 # ============================================================
 
@@ -234,6 +264,7 @@ for a Studio Head or Executive Producer.
     tools=[
         grafana_toolset
     ],
+    **agento11y_callbacks,
 )
 
 
@@ -308,6 +339,7 @@ If Kafka data is unavailable, clearly state that it is unavailable.
     tools=[
         confluent_toolset
     ],
+    **agento11y_callbacks,
 )
 
 
@@ -380,8 +412,8 @@ root_agent = LlmAgent(
     ),
 
     description=(
-        "Autonomous broadcast continuity and incident "
-        "supervisor for live entertainment streams."
+        "Autonomous cinema and video-streaming reliability and incident "
+        "supervisor for cinema and video-streaming reliability."
     ),
 
     sub_agents=[
@@ -390,9 +422,9 @@ root_agent = LlmAgent(
     ],
 
     instruction="""
-You are StreamGuard AI, an autonomous Broadcast Continuity
-Supervisor for live entertainment broadcasts, esports,
-sports, concerts, and premiere livestreams.
+You are StreamGuard AI, an autonomous Cinema & Video-Streaming Reliability
+Supervisor for cinema and video-streaming platforms, including
+OTT premieres, live cinema events, and on-demand playback.
 
 Your primary responsibility is to identify broadcast
 infrastructure problems early and coordinate the appropriate
@@ -467,4 +499,5 @@ Recommended action: increase transcode capacity."
             agent=url_context_agent
         ),
     ],
+    **agento11y_callbacks,
 )

@@ -12,3 +12,6 @@ jupyter>=1.0.0
 
 mcp-grafana==1.2.0
 google-adk[a2a,agent-identity]
+
+agento11y
+agento11y-google-adk
