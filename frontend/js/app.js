@@ -56,42 +56,81 @@ async function updateTelemetry() {
 
 async function runMCPAnalysis() {
     const feed = document.getElementById('alert-feed-box');
-    feed.innerHTML = '<div class="placeholder-state"><i class="fa-solid fa-spinner fa-spin placeholder-icon"></i><p>Gemini ADK querying Grafana Cloud MCP Server (query_prometheus_metrics, query_loki_logs)...</p></div>';
+    const narrator = document.getElementById('narrator-card-content');
+
+    feed.innerHTML = `
+        <div class="loading-state">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            <p>Running real Google ADK + Grafana MCP analysis...</p>
+        </div>
+    `;
+
+    narrator.innerHTML = `
+        <div class="loading-state">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            <p>Querying live broadcast telemetry...</p>
+        </div>
+    `;
 
     try {
-        const res = await fetch('/api/mcp/analyze', { method: 'POST' });
-        const data = await res.json();
+        const prompt =
+            "Check the current broadcast health using Grafana MCP tools. " +
+            "Do not invent telemetry. " +
+            "Identify any significant regional degradation, retrieve supporting " +
+            "metrics and logs, determine the evidence-supported likely cause, " +
+            "and provide What happened, Root cause, Impact, and Recommended action.";
 
-        const severityClass = data.headline.includes('CRITICAL') ? 'critical' : (data.headline.includes('WARNING') ? 'warning' : 'stable');
+        const res = await fetch(
+            `/api/adk/query?prompt=${encodeURIComponent(prompt)}`,
+            { method: 'POST' }
+        );
+
+        if (!res.ok) {
+            throw new Error(`ADK request failed: ${res.status}`);
+        }
+
+        const data = await res.json();
+        const response = data.response || "No ADK response returned.";
 
         feed.innerHTML = `
-            <div class="alert-card ${severityClass}">
-                <div class="alert-headline">${data.headline}</div>
-                <div class="alert-body">${data.plain_language_narrative}</div>
-                <div style="margin-bottom:0.5rem; font-size:0.85rem;"><strong>Impact:</strong> ${data.impact_summary}</div>
-                <div style="margin-bottom:0.75rem; font-size:0.85rem; color:#f97316;"><strong>Recommended Executive Action:</strong> ${data.recommended_action}</div>
-                <div class="alert-meta">
-                    <span>Grafana Incident: ${data.grafana_incident_id || 'N/A'}</span>
-                    <span>Dashboard Annotation: Synced @ ${data.grafana_annotation_timestamp}</span>
-                    <span>Time: ${data.timestamp}</span>
+            <div class="alert-item">
+                <div class="alert-content">
+                    <pre style="white-space: pre-wrap; margin: 0;">${escapeHtml(response)}</pre>
                 </div>
             </div>
         `;
 
-        document.getElementById('narrator-card-content').innerHTML = `
-            <div style="padding:1rem; background:#0b0f19; border-radius:8px; border:1px solid #1f2937;">
-                <h4 style="color:#f97316; margin-bottom:0.5rem;">${data.headline}</h4>
-                <p style="font-size:0.95rem; line-height:1.6;">${data.plain_language_narrative}</p>
-                <div style="margin-top:1rem; padding:0.75rem; background:#111827; border-radius:6px; border-left:3px solid #38bdf8;">
-                    <strong>Root Cause Signal Correlation:</strong> Evaluated Grafana PromQL metrics and Loki LogQL streams via <code>grafana/mcp-grafana</code> tools.
-                </div>
+        narrator.innerHTML = `
+            <div class="narrative-content">
+                <pre style="white-space: pre-wrap; margin: 0;">${escapeHtml(response)}</pre>
             </div>
         `;
 
-        loadAuditLogs();
     } catch (e) {
-        alert('Error analyzing broadcast health: ' + e);
+        console.error("Real ADK analysis failed:", e);
+
+        feed.innerHTML = `
+            <div class="error-state">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <p>Real ADK analysis failed: ${escapeHtml(e.message)}</p>
+            </div>
+        `;
+
+        narrator.innerHTML = `
+            <div class="error-state">
+                <p>${escapeHtml(e.message)}</p>
+            </div>
+        `;
     }
+}
+
+function escapeHtml(value) {
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
 }
 
 async function injectAnomaly(type) {

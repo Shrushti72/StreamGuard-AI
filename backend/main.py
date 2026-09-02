@@ -25,11 +25,21 @@ app.add_middleware(
 
 # Native Google Cloud ADK Agent Platform Endpoint
 @app.post("/api/adk/query")
-def run_google_adk_query(prompt: str = "Analyze live broadcast health using Grafana MCP tools"):
+def run_google_adk_query(
+    prompt: str = "Check the current broadcast health using Grafana MCP tools. Do not invent telemetry."
+):
     """
-    Executes native Google Cloud Agent Development Kit (ADK) Agent tool reasoning.
+    Execute the real StreamGuard Google ADK root agent.
+    The root agent uses the configured Grafana MCP and Confluent MCP toolsets.
     """
-    return adk_agent.process_query(prompt)
+    from backend.app.adk_agent_engine.real_runner import run_adk
+
+    return {
+        "status": "success",
+        "framework": "Google Cloud ADK",
+        "agent": "My_agent_StreamGuard_AI",
+        "response": run_adk(prompt),
+    }
 
 # API Endpoints
 @app.get("/api/telemetry/stream")

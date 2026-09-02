@@ -6,6 +6,9 @@ from typing import Dict, Any, List
 
 # Official Google Cloud ADK & Vertex AI Agent Engine imports
 import google.cloud.aiplatform as aiplatform
+from google.adk.agents import LlmAgent
+from google.adk.tools.mcp_tool import McpToolset
+from google.adk.integrations.agent_registry import AgentRegistry
 from backend.app.mcp.grafana_mcp_client import grafana_mcp_client
 from backend.app.simulator.telemetry_simulator import telemetry_simulator
 
@@ -54,6 +57,7 @@ class StreamGuardADKAgent:
     Engineered for deployment to Google Cloud Vertex AI Agent Engine.
     """
     def __init__(self, project_id: str = None, location: str = "us-central1"):
+        self.name = "streamguard-broadcast-supervisor-adk"
         self.project_id = project_id or os.getenv("PROJECT_ID", "default-project")
         self.location = location
         self.model_name = "gemini-2.5-flash"
@@ -104,5 +108,52 @@ class StreamGuardADKAgent:
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
         }
 
+# Live Confluent Kafka MCP via Google Agent Registry
+# Resolve the project from Cloud Run/Vertex environment first,
+# then fall back to the active gcloud project for local development.
+REGISTRY_PROJECT_ID = (
+    os.getenv("GOOGLE_CLOUD_PROJECT")
+    or os.getenv("PROJECT_ID")
+    or "project-5f28ba74-3df1-4c73-ab3"
+)
+
+confluent_registry = AgentRegistry(
+    project_id=REGISTRY_PROJECT_ID,
+    location="us-west1",
+)
+
+confluent_toolset = confluent_registry.get_mcp_toolset(
+    mcp_server_name="mcpServers/agentregistry-00000000-0000-0000-b9b1-260ef9023348"
+)
+
 # ADK Agent instance
-adk_agent = StreamGuardADKAgent()
+adk_agent = LlmAgent(
+    name="streamguard_broadcast_supervisor_adk",
+    model="gemini-2.5-flash",
+    description="Live Broadcast Continuity Supervisor for StreamGuard AI.",
+    instruction="""
+You are StreamGuard AI, a live broadcast monitoring agent.
+
+Use the available Grafana tools to inspect current broadcast telemetry.
+Do not invent telemetry, events, regions, or values.
+
+When Kafka event data is available, use it only as returned by the
+connected Kafka tools. Never infer a region unless the Kafka event
+contains region or region_id.
+
+Report:
+What happened:
+Root cause:
+Impact:
+Affected region:
+Severity:
+Recommended action:
+""",
+    tools=[
+        tool_query_prometheus,
+        tool_query_loki,
+        tool_create_incident,
+        tool_annotate_dashboard,
+        confluent_toolset,
+    ],
+)

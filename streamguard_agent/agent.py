@@ -4,6 +4,7 @@ from functools import cached_property
 
 from google.auth import default
 from google.genai import Client
+from google.genai.types import HttpOptions, HttpRetryOptions
 
 from google.adk.agents import LlmAgent
 from google.adk.models import Gemini
@@ -14,7 +15,7 @@ from google.adk.tools import url_context
 from google.adk.integrations.agent_registry import AgentRegistry
 from google.adk.auth.credential_manager import CredentialManager
 from google.adk.integrations.agent_identity import GcpAuthProvider
-from google.adk.tools.mcp_tool import McpToolset, StdioConnectionParams
+from google.adk.tools.mcp_tool import McpToolset, StdioConnectionParams, StreamableHTTPConnectionParams
 from mcp import StdioServerParameters
 
 
@@ -40,8 +41,20 @@ os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "True"
 
 class GlobalGemini(Gemini):
     """
-    Routes Gemini requests through the global Vertex AI endpoint.
+    Routes Gemini requests through the global Vertex AI endpoint
+    with retry/backoff for transient rate-limit responses.
     """
+
+    def __init__(self, **kwargs):
+        kwargs["retry_options"] = HttpRetryOptions(
+            attempts=5,
+            initial_delay=2.0,
+            max_delay=30.0,
+            exp_base=2.0,
+            jitter=1.0,
+            http_status_codes=[429, 500, 502, 503, 504],
+        )
+        super().__init__(**kwargs)
 
     @cached_property
     def api_client(self) -> Client:
@@ -49,6 +62,9 @@ class GlobalGemini(Gemini):
             vertexai=True,
             project=PROJECT_ID,
             location="global",
+            http_options=HttpOptions(
+                retry_options=self.retry_options,
+            ),
         )
 
 
@@ -72,25 +88,6 @@ registry = AgentRegistry(
     location=LOCATION,
 )
 
-# Confluent Managed MCP requires HTTP Basic auth
-# using the existing API key + API secret.
-def confluent_auth_headers(_context):
-    api_key = os.environ["CONFLUENT_API_KEY"]
-    api_secret = os.environ["CONFLUENT_API_SECRET"]
-
-    encoded = base64.b64encode(
-        f"{api_key}:{api_secret}".encode()
-    ).decode()
-
-    return {
-        "Authorization": f"Basic {encoded}"
-    }
-
-confluent_registry = AgentRegistry(
-    project_id=PROJECT_ID,
-    location="global",
-    header_provider=confluent_auth_headers,
-)
 
 
 # ============================================================
@@ -101,7 +98,7 @@ grafana_toolset = McpToolset(
     connection_params=StdioConnectionParams(
         server_params=StdioServerParameters(
             command="mcp-grafana",
-            args=["-t", "stdio"],
+            args=["-t", "stdio", "--disable-proxied"],
             env={
                 "GRAFANA_URL": os.environ["GRAFANA_URL"],
                 "GRAFANA_SERVICE_ACCOUNT_TOKEN": os.environ[
@@ -117,13 +114,36 @@ grafana_toolset = McpToolset(
 # CONFLUENT KAFKA MCP SERVER
 # ============================================================
 
-CONFLUENT_MCP_SERVER = (
-    "mcpServers/"
-    "agentregistry-00000000-0000-0000-a02c-3842630a9576"
+# The registered Confluent MCP endpoint is a Streamable HTTP server.
+# Connect directly to the endpoint using the verified Confluent
+# API-key/API-secret Basic authentication.
+CONFLUENT_MCP_URL = (
+    "https://mcp.asia-south1.gcp.confluent.cloud"
+    "/mcp/v1/organizations/"
+    "25bf86f4-a307-4dbe-a530-89090e74f12a"
 )
 
-confluent_toolset = confluent_registry.get_mcp_toolset(
-    mcp_server_name=CONFLUENT_MCP_SERVER
+
+def confluent_mcp_headers(_context):
+    api_key = os.environ["CONFLUENT_API_KEY"]
+    api_secret = os.environ["CONFLUENT_API_SECRET"]
+
+    encoded = base64.b64encode(
+        f"{api_key}:{api_secret}".encode()
+    ).decode()
+
+    return {
+        "Authorization": f"Basic {encoded}",
+    }
+
+
+confluent_toolset = McpToolset(
+    connection_params=StreamableHTTPConnectionParams(
+        url=CONFLUENT_MCP_URL,
+        timeout=30.0,
+        sse_read_timeout=300.0,
+    ),
+    header_provider=confluent_mcp_headers,
 )
 
 
@@ -257,14 +277,13 @@ Use these values only when a Kafka MCP tool explicitly requires
 environment_id or cluster_id.
 
 IMPORTANT TOOL ARGUMENT RULES:
-- list_kafka_topics: use only the arguments defined by its tool schema.
-- describe_kafka_topic: provide the required topic argument.
-- consume_kafka_messages: provide ONLY topic and, optionally, max_messages.
-- list_schema_subjects: use only the arguments defined by its tool schema.
-- read_schema_subject: provide the required subject argument.
-
-NEVER pass environment_id or cluster_id to consume_kafka_messages.
-NEVER invent additional arguments.
+- list_kafka_topics: provide environment_id and cluster_id.
+- describe_kafka_topic: provide the required arguments defined by the live tool schema.
+- consume_kafka_messages: provide environment_id, cluster_id, and topic_name. max_messages is optional.
+- list_schema_subjects: provide the required arguments defined by the live tool schema.
+- read_schema_subject: provide the required arguments defined by the live tool schema.
+- Use environment_id="env-zzg5v7" and cluster_id="lkc-0xd5w6p" when the live Kafka MCP tools require them.
+- Never invent additional arguments or event data.
 
 Publish important events to the appropriate Kafka topics.
 
