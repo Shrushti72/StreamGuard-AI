@@ -28,7 +28,7 @@ StreamGuard AI can also record operational incident context back into Grafana th
 
 **Google Cloud Run**
 
-https://streamguard-ai-793289044855.us-central1.run.app
+https://streamguard-ai-793289044855.us-central1.run.app/dev-ui/?app=streamguard_agent
 
 ### Source Code
 
