@@ -16,7 +16,14 @@ from google.adk.integrations.agent_registry import AgentRegistry
 from google.adk.auth.credential_manager import CredentialManager
 from google.adk.integrations.agent_identity import GcpAuthProvider
 from google.adk.tools.mcp_tool import McpToolset, StdioConnectionParams, StreamableHTTPConnectionParams
-from agento11y import Client as Agento11yClient
+from opentelemetry import metrics, trace
+from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from agento11y import Client as Agento11yClient, ClientConfig
 from agento11y_google_adk import with_agento11y_google_adk_callbacks
 from mcp import StdioServerParameters
 
@@ -151,7 +158,26 @@ confluent_toolset = McpToolset(
 
 # ============================================================
 # Grafana Agent Observability
-agento11y_client = Agento11yClient()
+# Configure OpenTelemetry before constructing the Agent Observability client.
+_otel_metric_exporter = OTLPMetricExporter()
+_otel_metric_reader = PeriodicExportingMetricReader(_otel_metric_exporter)
+_otel_meter_provider = MeterProvider(
+    metric_readers=[_otel_metric_reader]
+)
+metrics.set_meter_provider(_otel_meter_provider)
+
+_otel_tracer_provider = TracerProvider()
+_otel_tracer_provider.add_span_processor(
+    BatchSpanProcessor(OTLPSpanExporter())
+)
+trace.set_tracer_provider(_otel_tracer_provider)
+
+agento11y_client = Agento11yClient(
+    ClientConfig(
+        agent_name="StreamGuard AI",
+        agent_version="1.0.0",
+    )
+)
 agento11y_callbacks = with_agento11y_google_adk_callbacks(
     None,
     client=agento11y_client,
