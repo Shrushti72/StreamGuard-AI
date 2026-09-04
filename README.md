@@ -14,8 +14,6 @@
 
 * 🌐 **Live Hosted Application (Google Cloud Run)**: [https://streamguard-ai-793289044855.us-central1.run.app](https://streamguard-ai-793289044855.us-central1.run.app)
 * 🐙 **Source Code Repository**: [https://github.com/Shrushti72/StreamGuard-AI](https://github.com/Shrushti72/StreamGuard-AI)
-* 📄 **Architecture Flowchart PDF**: [`diagrams/StreamGuard_AI_Architecture_Diagrams.pdf`](diagrams/StreamGuard_AI_Architecture_Diagrams.pdf)
-* 🎬 **Interactive Architecture Viewer**: [`diagrams/Architecture_Flowcharts_Interactive.html`](diagrams/Architecture_Flowcharts_Interactive.html)
 
 ---
 
