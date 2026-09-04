@@ -1,1108 +1,339 @@
-# StreamGuard AI — Live Broadcast Continuity & Incident Supervisor
-
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Google Cloud](https://img.shields.io/badge/Google_Cloud-Gemini_Enterprise_ADK-4285F4?logo=google-cloud)](https://cloud.google.com/vertex-ai)
-[![Grafana Labs Track](https://img.shields.io/badge/Grafana_Labs_Track-Grafana_Cloud_MCP_Server-F46800?logo=grafana)](https://grafana.com/)
-
 # 🎬 StreamGuard AI
 
-## Agentic AI Reliability Supervisor for Cinema & Video Streaming
+### Agentic AI Reliability Supervisor for Cinema & Video Streaming
 
-StreamGuard AI is an **agentic AI reliability and continuity supervisor for cinema, OTT, and video-streaming platforms**.
-
-It investigates streaming degradation by autonomously correlating **Grafana Cloud observability data** with **Confluent Kafka event streams**, using **Google Agent Development Kit (ADK)** and **Gemini** to reason over operational evidence.
-
-Instead of requiring engineers to manually inspect dashboards, logs, alerts, incidents, and event streams, StreamGuard AI performs a multi-source investigation and produces an evidence-based operational report.
-
-It helps answer:
-
-> **What is failing? Where is it failing? What evidence supports the diagnosis? What might be causing it? How many viewers could be affected? What should the operator investigate next?**
-
-StreamGuard AI can also record operational incident context back into Grafana through annotations and provides **Grafana Agent Observability** for monitoring the AI agent itself.
+[![Google Cloud](https://img.shields.io/badge/Google_Cloud-Cloud_Run_Deployed-4285F4?style=for-the-badge&logo=google-cloud&logoColor=white)](https://streamguard-ai-793289044855.us-central1.run.app)
+[![Gemini ADK](https://img.shields.io/badge/Google_ADK-Gemini_2.5_%2F_3.6-34A853?style=for-the-badge&logo=google&logoColor=white)](https://cloud.google.com/vertex-ai)
+[![Grafana MCP](https://img.shields.io/badge/Grafana_Cloud_MCP-grafana%2Fmcp--grafana-F46800?style=for-the-badge&logo=grafana&logoColor=white)](https://grafana.com/)
+[![Confluent MCP](https://img.shields.io/badge/Confluent_Kafka-Confluent_MCP-000000?style=for-the-badge&logo=apachekafka&logoColor=white)](https://www.confluent.io/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 
 ---
 
-## 🚀 Live Demo
+## 🚀 Quick Links
 
-### Hosted Application
-
-**Google Cloud Run**
-
-https://streamguard-ai-793289044855.us-central1.run.app/dev-ui/?app=streamguard_agent
-
-### Source Code
-
-https://github.com/Shrushti72/StreamGuard-AI
+* 🌐 **Live Hosted Application (Google Cloud Run)**: [https://streamguard-ai-793289044855.us-central1.run.app](https://streamguard-ai-793289044855.us-central1.run.app)
+* 🐙 **Source Code Repository**: [https://github.com/Shrushti72/StreamGuard-AI](https://github.com/Shrushti72/StreamGuard-AI)
+* 📄 **Architecture Flowchart PDF**: [`diagrams/StreamGuard_AI_Architecture_Diagrams.pdf`](diagrams/StreamGuard_AI_Architecture_Diagrams.pdf)
+* 🎬 **Interactive Architecture Viewer**: [`diagrams/Architecture_Flowcharts_Interactive.html`](diagrams/Architecture_Flowcharts_Interactive.html)
 
 ---
 
-# 🎯 The Problem
+## 📌 Executive Summary
 
-Modern cinema and OTT platforms depend on complex streaming pipelines involving:
+**StreamGuard AI** is an **autonomous, agentic AI reliability and continuity supervisor** built for cinema, OTT, and live video-streaming platforms.
 
-- Content ingest
-- Transcoding
-- Origin infrastructure
-- CDN delivery
-- Regional edge infrastructure
-- Playback services
-- Event-streaming systems
+Built for the **Google Cloud Agentic Cinema: The Blockbuster Hackathon (Grafana Labs Track)**, StreamGuard AI replaces manual dashboard hunting during major movie premieres, live cinema events, or esports streams. It autonomously correlates **Grafana Cloud observability telemetry** with **Confluent Kafka event streams** using **Google Agent Development Kit (ADK)** and **Gemini 2.5/3.6** to reason over operational evidence in real time.
 
-During a major movie premiere, live cinema event, or high-traffic streaming release, infrastructure problems can quickly become viewer-facing incidents.
+Instead of requiring engineers to manually inspect dozens of disconnected dashboards, Loki logs, Prometheus metrics, alerts, and event topics under intense pressure, StreamGuard AI executes a multi-source investigation and delivers an **evidence-based operational report**.
 
-Typical symptoms include:
+It answers the critical operational questions:
+> **"What is failing? Where is it failing? What evidence supports the diagnosis? What might be causing it? How many viewers could be affected? And what should the operator investigate next?"**
 
-- Playback buffering
-- Stream freezes
-- Dropped frames
-- High transcoding latency
-- CPU saturation
-- Playback errors
-- Regional degradation
-- Incorrect alert routing
-- Inconsistent telemetry between systems
+---
 
-Traditional observability platforms provide the telemetry, but engineers still have to manually correlate information across multiple systems.
+## 🎯 The Problem & The Solution
 
-The real operational question is not simply:
+### 💥 The Problem
+Modern OTT and cinema streaming pipelines involve complex, multi-tier infrastructure:
+```text
+Ingest Pipeline ➔ Transcoding Clusters ➔ Origin Infrastructure ➔ Regional CDN Egress ➔ Edge Nodes ➔ Viewer Playback
+```
+During high-demand movie releases or live broadcasts, infrastructure problems rapidly propagate into viewer-facing incidents (buffering, dropped frames, transcode queue saturation, 5xx gateway errors).
 
-> "Is CPU high?"
+Traditional monitoring tools provide raw data, but SRE teams still have to **manually correlate signals** across disparate systems under extreme time pressure.
+
+The real operational challenge is not simply:
+> *"Is CPU utilization high?"*
 
 It is:
-
-> **"Is the streaming experience degrading, where is it happening, what evidence explains it, and what should we do next?"**
+> **"Is the streaming experience degrading, where is it happening, what evidence explains it, and what exact steps should the SRE team take next?"**
 
 ---
 
-# 💡 The Solution
-
-StreamGuard AI acts as an **AI-powered streaming reliability investigator**.
-
-An operator can provide a high-level request such as:
+### 💡 The Solution: StreamGuard AI Workflow
 
 ```text
-Investigate the current streaming health and identify the most likely cause.
-```
-
-The agent autonomously investigates the available observability and event-streaming data and correlates the evidence before producing a final report.
-
-The workflow combines:
-
-```text
-Operator Request
-       ↓
-StreamGuard AI
-       ↓
-Google ADK + Gemini
-       ↓
-┌───────────────────────┬───────────────────────┐
-│                       │
-▼                       ▼
-Grafana MCP             Confluent MCP
-│                       │
-▼                       ▼
-Metrics + Logs          Kafka Events
-Incidents + Alerts      Topics + Schemas
-│                       │
-└───────────┬───────────┘
-            ↓
-    Evidence Correlation
-            ↓
-     Root Cause Analysis
-            ↓
- Streaming Impact + Actions
-```
-
----
-
-# 🧠 Core Capabilities
-
-## 1. Agentic Investigation
-
-The operator provides a high-level goal instead of manually specifying individual dashboards, queries, or data sources.
-
-StreamGuard AI determines which available tools and sources are relevant to the investigation.
-
----
-
-## 2. Grafana Observability Investigation
-
-Through **Grafana Cloud MCP**, StreamGuard AI can investigate:
-
-- Prometheus metric names
-- Prometheus labels
-- Prometheus metric values
-- Loki labels
-- Loki logs
-- Datasource information
-- Alert groups
-- Grafana incidents
-- Incident details
-
-The agent can dynamically discover available telemetry and investigate the signals relevant to the current problem.
-
----
-
-## 3. Confluent Kafka Investigation
-
-Through **Confluent MCP**, StreamGuard AI investigates the event-streaming layer.
-
-The agent can:
-
-- Discover Kafka topics
-- Inspect schema subjects
-- Consume Kafka messages
-- Analyze stream-health events
-- Compare Kafka events with Grafana observations
-
-Example topics used by StreamGuard AI include:
-
-```text
-stream-health
-continuity-alerts
-broadcast-incidents
-streamguard-events
+               ┌───────────────────────────────────────────┐
+               │    Operator Request / Autonomous Goal     │
+               │   "Investigate current streaming health"  │
+               └─────────────────────┬─────────────────────┘
+                                     │
+                                     ▼
+               ┌───────────────────────────────────────────┐
+               │         StreamGuard AI Root Agent         │
+               │            (Google ADK + Gemini)          │
+               └─────────────────────┬─────────────────────┘
+                                     │
+                 ┌───────────────────┴───────────────────┐
+                 ▼                                       ▼
+    ┌───────────────────────────┐           ┌───────────────────────────┐
+    │ Broadcast Monitoring Agent│           │   Event Streaming Agent   │
+    └────────────┬──────────────┘           └────────────┬──────────────┘
+                 │                                       │
+                 ▼                                       ▼
+    ┌───────────────────────────┐           ┌───────────────────────────┐
+    │     Grafana Cloud MCP     │           │       Confluent MCP       │
+    │   (grafana/mcp-grafana)   │           │   (Kafka Stream Health)   │
+    └────────────┬──────────────┘           └────────────┬──────────────┘
+                 │                                       │
+         ┌───────┴───────┐                       ┌───────┴───────┐
+         ▼               ▼                       ▼               ▼
+  Prometheus Metrics  Loki Logs             Kafka Topics   Stream Events
+         │               │                       │               │
+         └───────────────┴───────────┬───────────┴───────────────┘
+                                     │
+                                     ▼
+                         Multi-Source Correlation
+                                     │
+                                     ▼
+                        3-Tier Evidence Engine
+                     (Verified | Derived | Hypotheses)
+                                     │
+                                     ▼
+                     Closed-Loop Grafana Write-Back
+                 (Dashboard Event Annotations #ANN)
 ```
 
 ---
 
-# 🔗 Multi-Source Correlation
+## 🧠 Core System Capabilities
 
-A key capability of StreamGuard AI is correlating evidence across monitoring and event-streaming systems.
+### 1. 🤖 Multi-Agent Investigation Architecture (Google ADK)
+StreamGuard AI uses specialized Google ADK agents to isolate operational concerns:
+* **Root Agent**: Accepts the operator goal, orchestrates subagent handoffs, synthesizes evidence, and generates final operational reports.
+* **Broadcast Monitoring Agent**: Specializes in Grafana Cloud observability via `grafana/mcp-grafana`.
+* **Event Streaming Agent**: Specializes in Confluent Kafka event topic discovery and message stream analysis.
 
-Instead of looking at isolated metrics, the agent can reason across a chain such as:
+### 2. 📊 Grafana Cloud MCP Integration (`grafana/mcp-grafana`)
+Demonstrates active runtime usage of the official Grafana MCP Server:
+* **PromQL Metrics (`query_prometheus`)**: Queries ingest CPU load, transcode queue depth, CDN egress bandwidth, and viewer buffer ratios.
+* **LogQL Logs (`query_loki_logs`)**: Inspects 5xx HTTP gateway timeouts and transcode drop-frame stack traces.
+* **Incidents API (`list_incidents`, `create_grafana_incident`)**: Inspects and opens official Grafana incidents.
 
-```text
-CPU Saturation
-      ↓
-Transcoding Latency
-      ↓
-Dropped Frames
-      ↓
-Viewer Buffering
-      ↓
-Playback Degradation
-```
+### 3. 🌊 Confluent Kafka MCP Integration
+Inspects the event-streaming layer:
+* Discovers Kafka topics (`stream-health`, `continuity-alerts`, `broadcast-incidents`).
+* Inspects schema subjects and consumes real-time stream-health events.
+* Correlates Kafka stream drops with Grafana telemetry.
 
-The agent can then compare these observations against Kafka stream-health events and other operational telemetry.
+### 4. 🔎 3-Tier Evidence-Based Reasoning
+Prevents assumptions from being presented as confirmed telemetry by categorizing findings into:
+* **✅ Verified Evidence**: Direct telemetry returned by Grafana or Confluent tools (e.g. `Transcode CPU > 94%`).
+* **🔎 Derived Observations**: Cross-system correlated patterns (e.g. `CPU spikes coincide with dropped frames 2m later`).
+* **⚠️ Hypotheses**: Possible explanations requiring further profiling (e.g. `Background job competing for CPU`).
 
-This creates a unified investigation instead of requiring engineers to inspect Grafana and Kafka independently.
+### 5. 🌎 Regional Correlation Safety
+Enforces strict tag validation: if telemetry lacks explicit `region_id` tags, the agent **never invents regional claims**, explicitly outputting a disclaimer instead.
 
----
+### 6. ✍️ Bidirectional Closed-Loop Grafana Write-Back
+When operational context is established, StreamGuard AI invokes `annotate_grafana_dashboard` to place event markers directly onto live Grafana SRE dashboards (`#ANN-8924`).
 
-# 🔎 Evidence-Based Reasoning
-
-StreamGuard AI is designed to avoid presenting assumptions as confirmed telemetry.
-
-Each investigation separates information into three levels.
-
-### ✅ Verified Evidence
-
-Facts directly returned by Grafana or Confluent tools.
-
-Example:
-
-```text
-CPU utilization exceeded 90%.
-Transcoding latency exceeded 700 ms.
-Dropped frames increased during degradation.
-```
-
-### 🔎 Derived Observations
-
-Patterns obtained by correlating multiple verified observations.
-
-Example:
-
-```text
-CPU spikes coincide with increased transcoding latency,
-frame drops, and elevated viewer buffering.
-```
-
-### ⚠️ Hypotheses
-
-Possible explanations that require additional investigation.
-
-Example:
-
-```text
-The recurring CPU pattern may indicate a background
-process competing with the transcoding workload.
-```
-
-This separation makes the investigation more transparent and defensible.
+### 7. 📈 Grafana Agent Observability (Observing the AI)
+Makes the AI agent itself observable, tracking model calls, execution latency, token counts, and estimated cost in real-time.
 
 ---
 
-# 🌎 Regional Correlation Safety
+## 🏗️ System Architecture Diagrams
 
-StreamGuard AI does not invent regional relationships when the available telemetry does not contain the required fields.
+### High-Level System Architecture Flowchart
+```mermaid
+flowchart TD
+    classDef operatorStyle fill:#0284c7,color:#fff,stroke:#0369a1,stroke-width:2px;
+    classDef agentStyle fill:#7c3aed,color:#fff,stroke:#5b21b6,stroke-width:2px;
+    classDef mcpStyle fill:#0ea5e9,color:#fff,stroke:#0369a1,stroke-width:2px;
+    classDef dataStyle fill:#d97706,color:#fff,stroke:#92400e,stroke-width:2px;
+    classDef engineStyle fill:#059669,color:#fff,stroke:#047857,stroke-width:2px;
+    classDef outputStyle fill:#db2777,color:#fff,stroke:#9d174d,stroke-width:2px;
 
-For example, a Kafka event may contain:
+    Op["👤 Streaming Operator / Technical Director"]:::operatorStyle
+    RootAgent["🧠 StreamGuard AI Root Agent"]:::agentStyle
+    ADK["⚡ Google ADK + Gemini (2.5 Flash / 3.6 Pro)"]:::agentStyle
 
-```json
-{
-  "event": "stream_health",
-  "status": "healthy",
-  "stream": "main-broadcast",
-  "cpu": 42,
-  "buffering_ratio": 0.3
-}
-```
+    subgraph AgentLayer ["🤖 Multi-Agent Delegation Layer"]
+        BMAgent["🎥 Broadcast Monitoring Agent\n(Grafana Telemetry & Incidents)"]:::agentStyle
+        ESAgent["📡 Event Streaming Agent\n(Kafka Topics & Event Streams)"]:::agentStyle
+    end
 
-If the event does not contain:
+    subgraph MCPLayer ["🔌 Model Context Protocol (MCP) Integration"]
+        GrafanaMCP["📊 Grafana Cloud MCP Server\n(grafana/mcp-grafana)"]:::mcpStyle
+        ConfluentMCP["🌊 Confluent Kafka MCP Server"]:::mcpStyle
+    end
 
-```text
-region
-region_id
-```
+    subgraph DataLayer ["🗄️ Multi-System Observability Data"]
+        subgraph GrafanaCloud ["Grafana Cloud Platform"]
+            PromData["📈 Prometheus Metrics\n(CPU, Latency, Buffer Ratio, Frame Drops)"]:::dataStyle
+            LokiData["📋 Loki Logs\n(HTTP 502/504, Stack Traces)"]:::dataStyle
+            AlertData["🚨 Alert Groups & Incidents\n(Active Alerts, Severity)"]:::dataStyle
+        end
 
-the agent does not claim that the event belongs to a particular region.
+        subgraph ConfluentCloud ["Confluent Cloud Kafka"]
+            KafkaTopics["💬 Stream-Health Topics\n(stream-health, broadcast-incidents)"]:::dataStyle
+            KafkaSchema["📜 Schema Registry & Subjects"]:::dataStyle
+            KafkaMsgs["✉️ Real-Time Kafka Event Messages"]:::dataStyle
+        end
+    end
 
-Instead, it explicitly states that direct regional correlation is not possible for that event.
+    subgraph ReasoningEngine ["🧠 Evidence Correlation & RCA Engine"]
+        MultiCorr["🔗 Cross-System Signal Correlation\n(CPU ➔ Latency ➔ Frame Drop ➔ Buffering)"]:::engineStyle
+        EvidClass["🔎 Evidence Classifier\n(Verified Evidence | Derived Obs | Hypotheses)"]:::engineStyle
+        RegSafety["🌎 Regional Correlation Safety Evaluator\n(Strict Identifier Check)"]:::engineStyle
+        ReportGen["📝 Evidence-Based Operational Report Generator"]:::engineStyle
+    end
 
-This prevents unsupported conclusions from being presented as operational facts.
+    subgraph OutputLayer ["📤 Closed-Loop Actions & Observability"]
+        WriteBack["✍️ Grafana Write-Back\n(Dashboard Event Annotations & Incident Logs)"]:::outputStyle
+        AgentO11y["📊 Grafana Agent Observability\n(Token Usage, Latency, Cost, Model Traces)"]:::outputStyle
+        OpReport["📄 Final Incident Investigation Report\n(Root Cause, Impact, Recommended Actions)"]:::outputStyle
+    end
 
----
+    Op --> RootAgent
+    RootAgent --> ADK
+    ADK --> BMAgent
+    ADK --> ESAgent
 
-# 📊 Example Investigation
+    BMAgent --> GrafanaMCP
+    ESAgent --> ConfluentMCP
 
-A StreamGuard AI investigation can identify a pattern such as:
+    GrafanaMCP --> PromData & LokiData & AlertData
+    ConfluentMCP --> KafkaTopics & KafkaSchema & KafkaMsgs
 
-```text
-CPU utilization       → >90%
-Transcoding latency   → >700 ms
-Dropped frames        → elevated
-Buffering             → severe
-Playback errors       → elevated
-```
+    PromData & LokiData & AlertData --> MultiCorr
+    KafkaTopics & KafkaMsgs --> MultiCorr
 
-The agent can then organize the investigation into:
-
-### Verified Evidence
-
-```text
-Repeated CPU saturation coincides with
-increased transcoding latency and frame drops.
-```
-
-### Derived Observation
-
-```text
-Transcoding resource pressure appears to propagate
-into playback-quality degradation.
-```
-
-### Hypothesis
-
-```text
-A recurring background process may be competing
-with the transcoding workload.
-```
-
-### Recommended Operator Actions
-
-```text
-1. Profile the affected workload.
-2. Inspect recurring jobs and background processes.
-3. Review container CPU allocation.
-4. Audit alert-routing rules.
-```
-
-The system provides operator-oriented recommendations rather than blindly executing destructive production changes.
-
----
-
-# ✍️ Grafana Write-Back
-
-StreamGuard AI is not limited to read-only observability.
-
-When operational context should be recorded, the agent can create a **Grafana annotation through the Grafana MCP integration**.
-
-This enables a closed-loop workflow:
-
-```text
-Observe
-   ↓
-Investigate
-   ↓
-Correlate
-   ↓
-Reason
-   ↓
-Recommend
-   ↓
-Record operational context in Grafana
-```
-
-Grafana therefore acts as both:
-
-- A source of operational evidence
-- A destination for investigation context
-
-This creates a practical **bidirectional Grafana workflow**.
-
----
-
-# 🤖 Multi-Agent Architecture
-
-StreamGuard AI uses specialized Google ADK agents.
-
-## Root Agent
-
-The root agent coordinates the overall investigation.
-
-Responsibilities:
-
-- Understand the operator request
-- Delegate investigation tasks
-- Coordinate specialized agents
-- Combine evidence
-- Produce the final investigation report
-
----
-
-## Broadcast Monitoring Agent
-
-The Grafana-focused agent specializes in streaming observability.
-
-Responsibilities include:
-
-- Prometheus metrics
-- Prometheus labels
-- Loki logs
-- Grafana incidents
-- Alert groups
-- Datasource information
-- Operational annotations
-
----
-
-## Event Streaming Agent
-
-The Confluent-focused agent specializes in event-streaming telemetry.
-
-Responsibilities include:
-
-- Kafka topics
-- Kafka schemas
-- Kafka messages
-- Stream-health events
-- Cross-system event correlation
-
----
-
-# 🧩 System Architecture
-
-```text
-                     ┌───────────────────────┐
-                     │       Operator        │
-                     └───────────┬───────────┘
-                                 │
-                                 ▼
-                     ┌───────────────────────┐
-                     │    StreamGuard AI     │
-                     │      Root Agent       │
-                     └───────────┬───────────┘
-                                 │
-                         Google ADK + Gemini
-                                 │
-                ┌────────────────┴────────────────┐
-                │                                 │
-                ▼                                 ▼
-     ┌────────────────────┐          ┌────────────────────┐
-     │ Broadcast           │          │ Event Streaming    │
-     │ Monitoring Agent    │          │ Agent              │
-     └─────────┬──────────┘          └──────────┬─────────┘
-               │                                │
-               ▼                                ▼
-     ┌────────────────────┐          ┌────────────────────┐
-     │ Grafana Cloud MCP  │          │ Confluent MCP      │
-     └─────────┬──────────┘          └──────────┬─────────┘
-               │                                │
-        ┌──────┼───────┐                        │
-        ▼      ▼       ▼                        ▼
-   Prometheus Loki Incidents                 Kafka
-        │      │       │                        │
-        └──────┴───────┴──────────┬─────────────┘
-                                  │
-                                  ▼
-                       Evidence Correlation
-                                  │
-                                  ▼
-                       Root Cause Analysis
-                                  │
-                                  ▼
-                    Viewer Impact + Actions
-                                  │
-                     ┌────────────┴────────────┐
-                     ▼                         ▼
-              Grafana Annotation       Agent Observability
+    MultiCorr --> EvidClass --> RegSafety --> ReportGen
+    ReportGen --> OpReport & WriteBack
+    ADK --> AgentO11y
 ```
 
 ---
 
-# 📈 Agent Observability
-
-StreamGuard AI also makes the **AI agent itself observable** using **Grafana Agent Observability**.
-
-This provides visibility into:
-
-- Conversations
-- Model generations
-- Model calls
-- Tool calls
-- Execution flow
-- Latency
-- Token usage
-- Estimated cost
-
-This creates two levels of observability.
-
-### Streaming System Observability
-
-```text
-Prometheus
-Loki
-Grafana Incidents
-Confluent Kafka
-```
-
-### AI Agent Observability
-
-```text
-Gemini generations
-ADK execution
-MCP tool calls
-Latency
-Tokens
-Estimated cost
-```
-
-Together:
-
-```text
-              StreamGuard AI
-                    │
-          ┌─────────┴─────────┐
-          │                   │
-          ▼                   ▼
-   Streaming System      AI Agent System
-    Observability         Observability
-          │                   │
-          ▼                   ▼
- Grafana + Confluent     Agent Observability
-          │                   │
-          └─────────┬─────────┘
-                    ▼
-             Operator Insight
-```
-
----
-
-# 🔬 Real Agent Execution
-
-StreamGuard AI has been validated using real Google ADK execution traces.
-
-A real investigation includes execution paths such as:
-
-```text
-Root Agent
-    ↓
-Agent Handoff
-    ↓
-Broadcast Monitoring Agent
-    ↓
-Gemini Reasoning
-    ↓
-Grafana MCP
-    ├── list_datasources
-    ├── list_prometheus_metric_names
-    ├── query_prometheus
-    ├── list_prometheus_label_names
-    ├── list_prometheus_label_values
-    ├── list_loki_label_names
-    ├── list_loki_label_values
-    ├── query_loki_logs
-    ├── list_alert_groups
-    ├── list_incidents
-    └── get_incident
-    ↓
-Event Streaming Agent
-    ↓
-Gemini Reasoning
-    ↓
-Confluent MCP
-    ├── list_kafka_topics
-    ├── list_schema_subjects
-    └── consume_kafka_messages
-    ↓
-Evidence Correlation
-    ↓
-Final Investigation Report
-```
-
-This demonstrates that the result is produced through **real agent execution and real MCP tool calls**, rather than a static or hard-coded response.
-
----
-
-# ☁️ Google Cloud Deployment
-
-StreamGuard AI is hosted on **Google Cloud Run**.
-
-### Production Service
-
-```text
-Service:
-streamguard-ai
-
-Region:
-us-central1
-```
-
-### Runtime Architecture
-
-```text
-Internet
-   ↓
-Google Cloud Run
-   ↓
-Google ADK
-   ↓
-Gemini
-   ├───────────────┐
-   ▼               ▼
-Grafana MCP    Confluent MCP
-```
-
-Sensitive credentials are stored using **Google Cloud Secret Manager** and injected into the Cloud Run runtime.
-
----
-
-# 🔐 Security
-
-StreamGuard AI does not commit credentials or API tokens to GitHub.
-
-Sensitive credentials are stored using Google Cloud Secret Manager.
-
-Examples include:
-
-```text
-Grafana URL
-Grafana service account token
-Confluent API key
-Confluent API secret
-Agent Observability token
-```
-
-Secrets are injected into the runtime instead of being stored in source code.
-
-**Never commit credentials, API keys, tokens, or passwords to the repository.**
-
----
-
-# 🛡️ Operational Safety
-
-StreamGuard AI is designed as an **operator-assistance system**, rather than an uncontrolled autonomous remediation engine.
-
-The agent:
-
-- Investigates telemetry
-- Correlates evidence
-- Explains likely causes
-- Estimates impact when supported by data
-- Recommends actions
-- Records investigation context when appropriate
-
-It does not blindly execute destructive production changes.
-
-This preserves human operational control while reducing investigation time.
-
----
-
-# 🎬 Cinema & OTT Use Cases
-
-## 🎥 Movie Premieres
-
-Detect and investigate streaming degradation during high-traffic movie releases.
-
-## 📺 OTT Platforms
-
-Identify playback-quality problems across infrastructure and delivery layers.
-
-## 🎞️ Live Cinema Events
-
-Monitor streaming infrastructure and correlate operational events during high-demand events.
-
-## ▶️ On-Demand Video
-
-Investigate transcoding, buffering, frame-drop, and playback-quality degradation.
-
-## 🌎 Regional Streaming
-
-Identify geographically isolated degradation when telemetry contains reliable regional identifiers.
-
----
-
-# 💬 Example Questions for the Agent
-
-### General Health
-
-```text
-Investigate the current streaming health.
-```
-
-### Root Cause
-
-```text
-What is the most likely root cause of the current degradation?
-Separate verified evidence from hypotheses.
-```
-
-### Regional Impact
-
-```text
-Which regions are experiencing the worst playback quality?
-```
-
-### Kafka Correlation
-
-```text
-Compare the Kafka stream-health events with Grafana metrics and logs.
-Do they tell the same story?
-```
-
-### Evidence Validation
-
-```text
-Can you prove that the West region is degraded?
-Do not rely only on the incident title.
-```
-
-### Viewer Impact
-
-```text
-Approximately how many viewers could be affected?
-Only estimate this if the telemetry supports it.
-```
-
-### Grafana Write-Back
-
-```text
-What incident context should be recorded back in Grafana?
-```
-
-### Agent Observability
-
-```text
-What did the agent do during this investigation?
-```
-
----
-
-# 📸 Screenshots
-
-The repository contains screenshots demonstrating the major components of StreamGuard AI.
-
-## 1. StreamGuard AI — ADK Web UI
-
-[StreamGuard AI ADK Web UI](https://chatgpt.com/c/01-adk-web-ui.png)
-
-The StreamGuard AI agent running through the Google ADK Web interface.
-
----
-
-## 2. Grafana MCP
-
-[Grafana MCP](https://chatgpt.com/c/02-grafana-mcp.png)
-
-StreamGuard AI querying Grafana observability data through MCP.
-
----
-
-## 3. Confluent Kafka
-
-[Confluent Kafka](https://chatgpt.com/c/03-confluent-kafka.png)
-
-StreamGuard AI discovering Kafka topics and consuming event-stream data through Confluent MCP.
-
----
-
-## 4. Multi-Source Investigation
-
-[Multi-Source Investigation](https://chatgpt.com/c/04-multi-source-investigation.png)
-
-A real investigation combining Grafana and Confluent evidence.
-
----
-
-## 5. Google ADK Traces
-
-[Google ADK Traces](https://chatgpt.com/c/05-adk-traces.png)
-
-Real ADK execution showing agent handoffs, Gemini calls, and MCP tool execution.
-
----
-
-## 6. Grafana Write-Back
-
-[Grafana Write-Back](https://chatgpt.com/c/06-grafana-writeback.png)
-
-StreamGuard AI recording operational investigation context back into Grafana.
-
----
-
-## 7. Agent Observability
-
-[Grafana Agent Observability](https://chatgpt.com/c/07-agent-observability.png)
-
-Grafana Agent Observability showing model generations, execution telemetry, token usage, and estimated cost.
-
----
-
-## 8. Architecture
-
-[StreamGuard AI Architecture](https://chatgpt.com/c/08-architecture.png)
-
-End-to-end StreamGuard AI architecture.
-
----
-
-# 🧪 Validation
-
-The project has been validated across the following components:
-
-| Component | Status |
-|---|---|
-| Google ADK | ✅ Working |
-| Gemini | ✅ Working |
-| ADK Web UI | ✅ Working |
-| Google Cloud Run | ✅ Deployed |
-| Grafana MCP | ✅ Working |
-| Prometheus queries | ✅ Working |
-| Loki queries | ✅ Working |
-| Grafana incidents | ✅ Working |
-| Grafana annotations | ✅ Verified |
-| Confluent MCP | ✅ Working |
-| Kafka topic discovery | ✅ Working |
-| Kafka message consumption | ✅ Working |
-| Multi-agent investigation | ✅ Working |
-| Evidence correlation | ✅ Working |
-| Agent Observability | ✅ Working |
-| Token tracking | ✅ Working |
-| Cost tracking | ✅ Working |
-| Agent execution traces | ✅ Working |
-| Google Cloud Secret Manager | ✅ Configured |
-
----
-
-# 📁 Repository Structure
+## 📁 Repository Structure
 
 ```text
 StreamGuard-AI/
 │
-├── streamguard_agent/
+├── backend/                        # FastAPI Service Backend & MCP Connectors
+│   ├── app/
+│   │   ├── agents/                 # Google ADK Agent definitions & prompts
+│   │   ├── mcp/                    # Grafana Cloud & Confluent MCP integrations
+│   │   └── simulator/              # Live telemetry anomaly injector
+│   ├── main.py                     # Entry point server
+│   └── requirements.txt
+│
+├── frontend/                       # StreamGuard AI Director Console UI
+│   ├── index.html                  # Live dashboard interface
+│   ├── css/
+│   └── js/
+│
+├── diagrams/                       # High-resolution SVG/PNG/PDF architecture diagrams
+│   ├── StreamGuard_AI_Architecture_Diagrams.pdf
+│   ├── Architecture_Flowcharts_Interactive.html
+│   ├── Sequence_Flow_Interactive.html
+│   └── StreamGuard_AI_Architecture_Diagram_Clean.png
+│
+├── streamguard_agent/              # ADK Web Agent definition package
 │   └── agent.py
 │
-├── screenshots/
-│   ├── 01-adk-web-ui.png
-│   ├── 02-grafana-mcp.png
-│   ├── 03-confluent-kafka.png
-│   ├── 04-multi-source-investigation.png
-│   ├── 05-adk-traces.png
-│   ├── 06-grafana-writeback.png
-│   ├── 07-agent-observability.png
-│   └── 08-architecture.png
+├── .gcp/                           # Google Cloud Run deployment scripts
+│   └── deploy.sh
 │
-├── requirements.txt
-├── Dockerfile
-├── README.md
-└── LICENSE
+├── Dockerfile                      # Container build definition
+├── requirements.txt                # Python dependencies
+├── README.md                       # Documentation
+└── LICENSE                         # MIT License
 ```
 
 ---
 
-# ⚙️ Local Development
+## ⚙️ Quick Start & Local Setup
 
-## Prerequisites
+### Prerequisites
+* Python 3.11+
+* Google Cloud Project with Vertex AI / Gemini API enabled
+* Grafana Cloud Account + Service Account Token
+* Confluent Cloud Account + API Credentials
 
-- Python 3.11+
-- Google Cloud project
-- Gemini / Vertex AI access
-- Google ADK
-- Grafana Cloud account
-- Grafana MCP access
-- Confluent Cloud account
-- Confluent MCP access
-
----
-
-## Install Dependencies
-
+### 1. Clone & Install Dependencies
 ```bash
+git clone https://github.com/Shrushti72/StreamGuard-AI.git
+cd StreamGuard-AI
+
 pip install -r requirements.txt
 ```
 
----
+### 2. Configure Environment Credentials
+Create a `.env` file or export environment variables:
+```bash
+# Gemini / Vertex AI Credentials
+export GEMINI_API_KEY="your-gemini-api-key"
 
-## Configure Credentials
+# Grafana Cloud Credentials
+export GRAFANA_URL="https://your-instance.grafana.net"
+export GRAFANA_SERVICE_ACCOUNT_TOKEN="your-grafana-token"
 
-Configure credentials through environment variables or Google Cloud Secret Manager.
+# Confluent Cloud Credentials
+export CONFLUENT_API_KEY="your-confluent-key"
+export CONFLUENT_API_SECRET="your-confluent-secret"
 
-### Grafana
-
-```text
-GRAFANA_URL
-GRAFANA_SERVICE_ACCOUNT_TOKEN
+# Grafana Agent Observability Credentials
+export AGENTO11Y_ENDPOINT="https://otlp-gateway.grafana.net"
+export AGENTO11Y_AUTH_TOKEN="your-agent-o11y-token"
 ```
 
-### Confluent
-
-```text
-CONFLUENT_API_KEY
-CONFLUENT_API_SECRET
-```
-
-### Agent Observability
-
-```text
-AGENTO11Y_ENDPOINT
-AGENTO11Y_PROTOCOL
-AGENTO11Y_AUTH_MODE
-AGENTO11Y_AUTH_TENANT_ID
-AGENTO11Y_AUTH_TOKEN
-```
-
-**Never commit credentials or tokens to the repository.**
-
----
-
-## Run Locally
-
-Start the Google ADK Web interface:
-
+### 3. Run Locally via Google ADK CLI
 ```bash
 adk web streamguard_agent \
   --host 0.0.0.0 \
   --port 8080
 ```
-
-For Google Cloud Shell, configure the appropriate Cloud Shell origin using the ADK Web `--allow_origins` option.
-
----
-
-# 🧰 Technology Stack
-
-| Technology | Purpose |
-|---|---|
-| Google Gemini | Agent reasoning |
-| Google ADK | Agent framework and orchestration |
-| Google Cloud Run | Hosted application |
-| Google Cloud Secret Manager | Secure credential storage |
-| Grafana Cloud | Observability and incident data |
-| Grafana MCP | Metrics, logs, incidents and annotations |
-| Prometheus | Streaming infrastructure metrics |
-| Loki | Streaming infrastructure logs |
-| Confluent Cloud | Event streaming |
-| Confluent MCP | Kafka investigation |
-| Grafana Agent Observability | AI agent telemetry |
-| Python | Application implementation |
+Open `http://localhost:8080` to access the StreamGuard AI Director Console.
 
 ---
 
-# 🌟 What Makes StreamGuard AI Different?
+## ☁️ Deployment to Google Cloud Run
 
-## 1. Agentic Investigation
+Deploy serverless to Google Cloud Run using Google Cloud Secret Manager for credentials:
 
-The operator provides a goal instead of manually constructing every query.
+```bash
+# Submit build to Google Cloud Artifact Registry
+gcloud builds submit --tag gcr.io/$PROJECT_ID/streamguard-ai
 
-## 2. Multi-System Reasoning
-
-Grafana observability and Confluent Kafka events are investigated together.
-
-## 3. Evidence-First RCA
-
-The agent clearly separates verified evidence, derived observations, and hypotheses.
-
-## 4. Safe Correlation
-
-The agent does not invent regional relationships when telemetry lacks the necessary identifiers.
-
-## 5. Bidirectional Grafana Integration
-
-The agent can investigate Grafana and record operational context back through annotations.
-
-## 6. Observable AI
-
-Grafana Agent Observability exposes model calls, tool calls, latency, tokens, conversations, and estimated cost.
-
-## 7. Operator-Centric Design
-
-The system produces actionable recommendations while keeping humans in control of production remediation.
-
----
-
-# 🏗️ End-to-End Workflow
-
-```text
-1. Operator reports a streaming problem
-                 ↓
-2. StreamGuard AI receives the investigation goal
-                 ↓
-3. Root agent delegates to specialized agents
-                 ↓
-4. Grafana agent investigates metrics, logs and incidents
-                 ↓
-5. Confluent agent investigates Kafka events
-                 ↓
-6. Gemini reasons across the collected evidence
-                 ↓
-7. Evidence is separated from observations and hypotheses
-                 ↓
-8. Streaming impact is summarized
-                 ↓
-9. Recommended operator actions are generated
-                 ↓
-10. Relevant incident context can be recorded in Grafana
-                 ↓
-11. Agent execution is captured by Agent Observability
+# Deploy to Cloud Run with injected secrets
+gcloud run deploy streamguard-ai \
+  --image gcr.io/$PROJECT_ID/streamguard-ai \
+  --platform managed \
+  --region us-central1 \
+  --allow-unauthenticated \
+  --set-secrets="GRAFANA_SERVICE_ACCOUNT_TOKEN=grafana-token:latest,CONFLUENT_API_SECRET=confluent-secret:latest"
 ```
 
 ---
 
-# 📌 Key Design Principles
+## 🧪 Hackathon Component Validation
 
-### Evidence Over Assumptions
-
-The agent should only make claims supported by available telemetry.
-
-### Cross-System Correlation
-
-Important incidents often require combining multiple observability sources.
-
-### Human-in-the-Loop Operations
-
-The agent assists engineers instead of making uncontrolled production changes.
-
-### Explainable Investigation
-
-The final response makes it clear why a conclusion was reached.
-
-### Observable AI
-
-The AI system itself should be observable, measurable, and debuggable.
+| Component / Feature | Technology Stack | Status |
+|---|---|---|
+| **Agent Reasoning Engine** | Google Gemini 2.5 Flash / 3.6 Pro | ✅ Verified |
+| **Multi-Agent Orchestration** | Google Agent Development Kit (ADK) | ✅ Verified |
+| **Cloud Hosting** | Google Cloud Run (`us-central1`) | ✅ Live & Deployed |
+| **Grafana Metrics (PromQL)** | Grafana Cloud MCP (`query_prometheus`) | ✅ Verified |
+| **Grafana Logs (LogQL)** | Grafana Cloud MCP (`query_loki_logs`) | ✅ Verified |
+| **Grafana Write-Back** | Grafana Cloud MCP (`annotate_grafana_dashboard`) | ✅ Verified |
+| **Kafka Event Streaming** | Confluent MCP (`consume_kafka_messages`) | ✅ Verified |
+| **AI Agent Observability** | Grafana Agent Observability (OTLP) | ✅ Verified |
+| **Credential Security** | Google Cloud Secret Manager | ✅ Configured |
 
 ---
 
-# 🏆 Hackathon Alignment
+## 📜 License
 
-StreamGuard AI was built for the **Agentic Cinema: The Blockbuster Hackathon**.
-
-The project focuses on the reliability challenges behind modern cinema, OTT, and video-streaming experiences.
-
-It combines:
-
-```text
-Google Cloud
-     +
-Gemini
-     +
-Google ADK
-     +
-Grafana Cloud MCP
-     +
-Confluent Kafka MCP
-     +
-Grafana Agent Observability
-```
-
-The result is an agentic reliability workflow that transforms:
-
-```text
-Telemetry
-   ↓
-Investigation
-   ↓
-Correlation
-   ↓
-Reasoning
-   ↓
-Operational Insight
-```
+This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
 
 ---
 
-# 🎯 Why This Matters
+## 👩‍💻 Author & Acknowledgments
 
-For a streaming operator, the value is not another dashboard.
+**Shrushti Wakchaure** — Built for the **Google Cloud Agentic Cinema: The Blockbuster Hackathon**.
 
-The value is reducing the time between:
-
-```text
-Something is wrong
-        ↓
-We understand what is happening
-        ↓
-We know what evidence supports it
-        ↓
-We know what to investigate next
-```
-
-StreamGuard AI brings these steps together into one agentic workflow.
-
----
-
-# 📜 License
-
-This project is licensed under the **MIT License**.
-
-See the `LICENSE` file for the complete license text.
-
----
-
-# 👩‍💻 Author
-
-**Shrushti Wakchaure**
-
-Built with:
-
-- Google Cloud
-- Gemini
-- Google Agent Development Kit
-- Grafana Cloud
-- Grafana MCP
-- Confluent Kafka
-- Confluent MCP
-- Grafana Agent Observability
-
----
-
-# 🎬 Final Takeaway
-
-> **When a major movie or streaming event starts failing, StreamGuard AI turns scattered observability signals into an evidence-based reliability investigation.**
-
-It helps operators answer:
-
-**What happened?**
-
-**Where did it happen?**
-
-**What evidence supports it?**
-
-**What might be causing it?**
-
-**How many viewers could be affected?**
-
-**What should the operator investigate next?**
-
-And when appropriate:
-
-**What incident context should be recorded back into Grafana?**
-
----
-
-## ⭐ StreamGuard AI
-
-**Observe → Investigate → Correlate → Reason → Recommend**
-
-### Making cinema and video-streaming reliability more intelligent, explainable, and operationally actionable.
+Special thanks to **Google Cloud** and **Grafana Labs** for providing the ADK framework and official Grafana Cloud MCP Server integrations.
